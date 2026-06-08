@@ -14,10 +14,34 @@ export interface CodBlockData {
   language: string;
 }
 
+export interface CodeBlockActionMethods {
+  toggleExpand: () => void;
+  copyCode: () => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  download: () => void;
+  resetView: () => void;
+  switchMermaidView: (show: boolean) => void;
+  getMermaidContainer: () => HTMLElement | null;
+}
+
+export interface CodeBlockActionStates {
+  expanded: boolean;
+  copied: boolean;
+  isMermaid: boolean;
+  showMermaidDiagram: boolean;
+}
+
+export type CodeBlockActions = CodeBlockActionMethods & CodeBlockActionStates;
+
+export type CodeBlockSlotScope = CodeBlockActions & {
+  codeBlockData: CodBlockData;
+};
+
 export type CodeBlockSlot = {
-  actions?: () => void;
-  header?: () => void;
-  content?: () => void;
+  actions?: (scope: CodeBlockActions) => any;
+  header?: (scope: CodeBlockActions) => any;
+  content?: (scope: CodeBlockActions) => any;
 };
 
 export type Theme = 'light' | 'dark';

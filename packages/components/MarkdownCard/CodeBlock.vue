@@ -2,12 +2,12 @@
   <div class="mc-code-block" :class="themeClass" ref="rootRef">
     <div class="mc-code-block-header" v-if="!$slots.header">
       <span class="mc-code-lang">{{ language }}</span>
-      <slot name="actions">
+      <slot name="actions" v-bind="codeBlockActions">
         <div class="mc-code-block-actions">
           <div v-if="isMermaid" style="margin-right: 8px">
             <ul class="mc-diagram-switch" :class="{ 'mc-show-code': !showMermaidDiagram }">
-              <li @click="showMermaidDiagram = true" :class="{ 'mc-diagram-switch-active': showMermaidDiagram }">{{ t('Md.diagram') }}</li>
-              <li @click="showMermaidDiagram = false" :class="{ 'mc-diagram-switch-active': !showMermaidDiagram }">{{ t('Md.code') }}</li>
+              <li @click="switchMermaidView(true)" :class="{ 'mc-diagram-switch-active': showMermaidDiagram }">{{ t('Md.diagram') }}</li>
+              <li @click="switchMermaidView(false)" :class="{ 'mc-diagram-switch-active': !showMermaidDiagram }">{{ t('Md.code') }}</li>
             </ul>
           </div>
           <div
@@ -44,7 +44,7 @@
           <div
             class="mc-action-btn mc-copy-btn"
             :title="t('Md.copy')"
-            @click="copyCode"
+            @click="handleCopyClick"
           >
             <img v-if="!copied" src="./asset/copy-new.svg" />
             <img v-else src="./asset/right.svg">
@@ -52,7 +52,7 @@
         </div>
       </slot>
     </div>
-    <slot name="header" v-else></slot>
+    <slot name="header" v-bind="codeBlockActions" v-else></slot>
     <Transition
       name="collapse-transition"
       @beforeEnter="beforeEnter"
@@ -64,7 +64,7 @@
     >
       <div v-show="expanded">
           <div v-if="isMermaid && showMermaidDiagram" class="mc-mermaid-content"></div>
-          <slot v-else-if="$slots.content" name="content"></slot>
+          <slot v-else-if="$slots.content" name="content" v-bind="codeBlockActions"></slot>
           <pre v-else><code :class="`hljs language-${language}`" v-html="highlightedCode"></code></pre>
       </div>
     </Transition>
@@ -148,22 +148,32 @@ const highlightedCode = computed(() => {
 
 const rootRef = ref<HTMLElement | null>(null);
 
+const getMermaidContainer = (): HTMLElement | null => {
+  return rootRef.value?.querySelector('.mc-mermaid-content') || null;
+};
+
 const zoomIn = () => {
-  const container = rootRef.value?.querySelector('.mc-mermaid-content');
+  const container = getMermaidContainer();
   if (container && mermaidService) {
     mermaidService.zoomIn(container);
   }
 };
 const zoomOut = () => {
-  const container = rootRef.value?.querySelector('.mc-mermaid-content');
+  const container = getMermaidContainer();
   if (container && mermaidService) {
     mermaidService.zoomOut(container);
   }
 };
 const download = () => {
-  const container = rootRef.value?.querySelector('.mc-mermaid-content');
+  const container = getMermaidContainer();
   if (container && mermaidService) {
     mermaidService.download(container);
+  }
+};
+const resetView = () => {
+  const container = getMermaidContainer();
+  if (container && mermaidService) {
+    mermaidService.reset(container);
   }
 };
 
@@ -196,28 +206,64 @@ const toggleExpand = () => {
   expanded.value = !expanded.value;
 };
 
-const copyCode = debounce((e: Event) => {
-  const target = e.target as HTMLElement;
+const switchMermaidView = (show: boolean) => {
+  showMermaidDiagram.value = show;
+};
+
+const copyCodeInternal = () => {
   if (navigator.clipboard) {
     navigator.clipboard.writeText(props.code);
   } else {
-      const textarea = document.createElement('textarea');
-      textarea.style.position = 'fixed';
-      textarea.style.top = '-9999px';
-      textarea.style.left = '-9999px';
-      textarea.style.zIndex = '-1';
+    const textarea = document.createElement('textarea');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    textarea.style.left = '-9999px';
+    textarea.style.zIndex = '-1';
     textarea.value = props.code;
     document.body.appendChild(textarea);
     textarea.select();
-      document.execCommand('copy');
+    document.execCommand('copy');
     document.body.removeChild(textarea);
   }
-    target.classList.remove('icon-copy-new');
   copied.value = true;
   setTimeout(() => {
     copied.value = false;
   }, 1500);
+};
+
+const handleCopyClick = debounce((_e: Event) => {
+  copyCodeInternal();
 }, 300);
+
+const codeBlockActions = computed(() => ({
+  toggleExpand,
+  copyCode: copyCodeInternal,
+  zoomIn,
+  zoomOut,
+  download,
+  resetView,
+  switchMermaidView,
+  getMermaidContainer,
+  expanded: expanded.value,
+  copied: copied.value,
+  isMermaid: isMermaid.value,
+  showMermaidDiagram: showMermaidDiagram.value,
+}));
+
+defineExpose({
+  toggleExpand,
+  copyCode: copyCodeInternal,
+  zoomIn,
+  zoomOut,
+  download,
+  resetView,
+  switchMermaidView,
+  getMermaidContainer,
+  expanded,
+  copied,
+  isMermaid,
+  showMermaidDiagram,
+});
 
 const beforeEnter = (el: RendererElement) => {
   if (!el.dataset) {

@@ -778,16 +778,18 @@ onMounted(() => {
 
 ### 自定义代码块操作区
 
-我们提供了 `actions` 插槽，支持你自定义代码块操作区。
+我们提供了 `actions` 插槽，支持你自定义代码块操作区。插槽作用域中提供了内置操作方法和状态，方便你在自定义 UI 中复用组件逻辑。
 
 :::demo
 
 ```vue
 <template>
   <McMarkdownCard :content="content" :theme="theme">
-    <template #actions="{ codeBlockData }">
+    <template #actions="{ codeBlockData, toggleExpand, copyCode }">
       <div class="btn-group">
         <d-button variant="solid" @click="handleAction(codeBlockData)">自定义按钮</d-button>
+        <d-button @click="copyCode">复制代码</d-button>
+        <d-button @click="toggleExpand">收起/展开</d-button>
       </div>
     </template>
   </McMarkdownCard>
@@ -830,6 +832,85 @@ onMounted(() => {
   }
 });
 </script>
+```
+
+:::
+
+### 自定义代码块操作区（Mermaid）
+
+当开启 Mermaid 渲染时，插槽作用域还提供了 `zoomIn`、`zoomOut`、`download`、`switchMermaidView` 等方法及 `isMermaid`、`showMermaidDiagram` 等状态，方便自定义 Mermaid 操作按钮。
+
+:::demo
+
+```vue
+<template>
+  <McMarkdownCard :enableMermaid="true" :content="content" :theme="theme">
+    <template #actions="{ codeBlockData, isMermaid, showMermaidDiagram, zoomIn, zoomOut, download, resetView, switchMermaidView, copyCode, toggleExpand }">
+      <div class="btn-group">
+        <span class="lang-tag">{{ codeBlockData.language }}</span>
+        <template v-if="isMermaid && showMermaidDiagram">
+          <d-button size="sm" @click="zoomIn">放大</d-button>
+          <d-button size="sm" @click="zoomOut">缩小</d-button>
+          <d-button size="sm" @click="resetView">适应页面</d-button>
+          <d-button size="sm" @click="download">下载</d-button>
+          <d-button size="sm" @click="switchMermaidView(false)">查看代码</d-button>
+        </template>
+        <template v-if="isMermaid && !showMermaidDiagram">
+          <d-button size="sm" @click="switchMermaidView(true)">查看图表</d-button>
+        </template>
+        <d-button size="sm" @click="copyCode">复制</d-button>
+        <d-button size="sm" @click="toggleExpand">收起/展开</d-button>
+      </div>
+    </template>
+  </McMarkdownCard>
+</template>
+<script setup>
+import { ref, onMounted } from 'vue';
+let themeService;
+const theme = ref('light');
+const content = ref(`
+\`\`\`mermaid
+flowchart LR
+A[Hard] -->|Text| B(Round)
+B --> C{Decision}
+C -->|One| D[Result 1]
+C -->|Two| E[Result 2]
+\`\`\`
+`);
+
+const changeTheme = () => {
+  theme.value = theme.value === 'light' ? 'dark' : 'light';
+  themeClass.value = themeClass.value === 'light-background' ? 'dark-background' : 'light-background';
+};
+
+const themeChange = () => {
+  if (themeService) {
+    theme.value = themeService.currentTheme.id === 'infinity-theme' ? 'light' : 'dark';
+  }
+};
+
+onMounted(() => {
+  if(typeof window !== 'undefined'){
+    themeService = window['devuiThemeService'];
+  }
+  themeChange();
+  if (themeService && themeService.eventBus) {
+    themeService.eventBus.add('themeChanged', themeChange);
+  }
+});
+</script>
+<style scoped lang="scss">
+.btn-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.lang-tag {
+  font-size: 12px;
+  margin-right: 8px;
+  opacity: 0.6;
+}
+</style>
 ```
 
 :::

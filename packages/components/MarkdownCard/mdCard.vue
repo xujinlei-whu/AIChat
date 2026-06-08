@@ -17,7 +17,7 @@ import { Fragment, type VNode, computed, h, nextTick, onMounted, ref, useSlots, 
 import CodeBlock from './CodeBlock.vue';
 import { MDCardService } from '@matechat/common/MarkdownCard/common/MDCardService';
 import { mdCardProps } from './mdCard.types';
-import { type CodeBlockSlot, defaultTypingConfig, type ASTNode } from '@matechat/common/MarkdownCard/common/mdCard.types';
+import { type CodeBlockSlot, CodeBlockActions, defaultTypingConfig, type ASTNode } from '@matechat/common/MarkdownCard/common/mdCard.types';
 import { htmlToVNode } from './MDCardParser';
 import { tokensToAst, isValidTagName } from '@matechat/common/MarkdownCard/common/parser';
 import { useMarkdownCardFoundation } from './useMarkdownCardFoundation';
@@ -225,13 +225,13 @@ const createCodeBlock = (
 ) => {
   const codeBlockSlots: CodeBlockSlot = {
     actions: slots.actions
-      ? () => slots.actions?.({ codeBlockData: { code, language } }) || null
+      ? (scope: CodeBlockActions) => slots.actions?.({ ...scope, codeBlockData: { code, language } }) || null
       : undefined,
     header: slots.header
-      ? () => slots.header?.({ codeBlockData: { code, language } }) || null
+      ? (scope: CodeBlockActions) => slots.header?.({ ...scope, codeBlockData: { code, language } }) || null
       : undefined,
     content: slots.content
-      ? () => slots.content?.({ codeBlockData: { code, language } }) || null
+      ? (scope: CodeBlockActions) => slots.content?.({ ...scope, codeBlockData: { code, language } }) || null
       : undefined,
   };
   return h(
