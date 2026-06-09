@@ -27,9 +27,33 @@ bannerSrc: '/bubbleBanner.png'
 
 | 插槽名     | 返回值 | 说明               |
 | ---------- | ------ | ------------------ |
-| codeActions    | { codeBlockData: [CodeBlockData](#codeblockdata) }     | 代码块头部右侧自定义操作区域     |
-| codeHeader     | { codeBlockData: [CodeBlockData](#codeblockdata) }     | 自定义代码块头部区域     |
-| codeContent     | { codeBlockData: [CodeBlockData](#codeblockdata) }     | 自定义代码块内容区域     |
+| codeActions    | [CodeBlockSlotScope](#codeblockslotscope)     | 代码块头部右侧自定义操作区域     |
+| codeHeader     | [CodeBlockSlotScope](#codeblockslotscope)     | 自定义代码块头部区域     |
+| codeContent     | [CodeBlockSlotScope](#codeblockslotscope)     | 自定义代码块内容区域     |
+
+### 代码块实例方法
+
+通过 `ref` 获取 CodeBlock 实例后，可调用以下方法：
+
+| 方法名         | 类型                              | 说明                                                   |
+| -------------- | --------------------------------- | ------------------------------------------------------ |
+| toggleExpand   | `() => void`                      | 切换代码块展开/收起状态                                 |
+| copyCode       | `() => void`                      | 复制代码内容到剪贴板                                   |
+| zoomIn         | `() => void`                      | Mermaid 图表放大（仅 mermaid 代码块可用）              |
+| zoomOut        | `() => void`                      | Mermaid 图表缩小（仅 mermaid 代码块可用）              |
+| download       | `() => void`                      | Mermaid 图表下载为 PNG（仅 mermaid 代码块可用）        |
+| resetView      | `() => void`                      | Mermaid 图表适应页面，重置缩放和偏移到初始状态（仅 mermaid 代码块可用） |
+| getMermaidContainer | `() => HTMLElement \| null`   | 获取 Mermaid 图表容器 DOM 元素，用于自定义 DOM 操作 |
+| switchMermaidView | `(show: boolean) => void`      | 切换 Mermaid 图表/代码视图                              |
+
+### 代码块实例属性
+
+| 属性名              | 类型       | 说明                           |
+| ------------------- | ---------- | ------------------------------ |
+| expanded            | `boolean`  | 代码块是否展开                 |
+| copied              | `boolean`  | 是否已复制                     |
+| isMermaid           | `boolean`  | 是否为 Mermaid 代码块          |
+| showMermaidDiagram  | `boolean`  | 是否显示 Mermaid 图表视图      |
 
 ### 事件
 
@@ -73,7 +97,41 @@ interface CodeBlockData {
   code: string;
   language: string;
 }
-``` 
+```
+
+#### CodeBlockActionMethods
+
+```ts
+interface CodeBlockActionMethods {
+  toggleExpand: () => void;
+  copyCode: () => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  download: () => void;
+  resetView: () => void;
+  switchMermaidView: (show: boolean) => void;
+  getMermaidContainer: () => HTMLElement | null;
+}
+```
+
+#### CodeBlockActionStates
+
+```ts
+interface CodeBlockActionStates {
+  expanded: boolean;
+  copied: boolean;
+  isMermaid: boolean;
+  showMermaidDiagram: boolean;
+}
+```
+
+#### CodeBlockSlotScope
+
+```ts
+type CodeBlockSlotScope = CodeBlockActionMethods & CodeBlockActionStates & {
+  codeBlockData: CodeBlockData;
+};
+```
 
 #### ThinkOptions
 
